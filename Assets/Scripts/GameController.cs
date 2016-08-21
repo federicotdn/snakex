@@ -1,27 +1,35 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour {
 
     public GameGrid gameGrid;
     public GUIController guiController;
     public float inputCooldown = 1;
-    public int appleCount = 5;
-    public bool enableRotation = true;
 
     private GridCube.Direction lastDirection = GridCube.Direction.RIGHT;
     private float lastInputTime = 0;
     private int score = 0;
+    private bool playing = true;
 
     void Start() {
-        QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = 60;
+        Initialize();
+	}
+
+    private void Initialize() {
+        bool enableRotation = (PlayerPrefs.GetInt("3dMode", 1) == 1);
+        int appleCount = PlayerPrefs.GetInt("AppleCount", 20);
 
         gameGrid.SetupGrid(enableRotation, appleCount);
         SetupCamera();
-	}
+    }
 	
 	void Update() {
+        if (!playing) {
+            return;
+        }
+
         GridCube.Direction dir = ReadInput();
 
         if (dir == GridCube.Direction.NONE || AreOpposite(dir, lastDirection)) {
@@ -34,14 +42,12 @@ public class GameController : MonoBehaviour {
         if (lastInputTime > inputCooldown) {
             lastInputTime = 0;
 
-            Debug.Log("Read direction:");
-            Debug.Log(dir);
-
             GameGrid.MoveResult result = gameGrid.MoveHead(dir);
             switch (result) {
                 case GameGrid.MoveResult.DIED:
-                    Debug.Log("You died!");
-                    gameObject.SetActive(false);
+                    playing = false;
+                    guiController.RemoveNotifications();
+                    guiController.SetGameOverPanelActive(true);
                     break;
                 case GameGrid.MoveResult.ERROR:
                     Debug.Log("An error occured.");
@@ -63,7 +69,7 @@ public class GameController : MonoBehaviour {
     void SetupCamera() {
         float frustumHeight = gameGrid.GetGridSizeWorld();
         float distance = frustumHeight / Mathf.Tan(Camera.main.fieldOfView * 0.5f * Mathf.Deg2Rad);
-        Camera.main.transform.Translate(0, 0, -distance);
+        Camera.main.transform.position = new Vector3(0, 0, -distance);
     }
 
     private bool AreOpposite(GridCube.Direction a, GridCube.Direction b) {
@@ -92,5 +98,17 @@ public class GameController : MonoBehaviour {
         }
 
         return GridCube.Direction.NONE;
+    }
+
+    public void RestartGame() {
+        guiController.SetGameOverPanelActive(false);
+        Initialize();
+        playing = true;
+        score = 0;
+        guiController.SetScore(score);
+    }
+
+    public void BackToMenu() {
+        SceneManager.LoadScene("Menu");
     }
 }

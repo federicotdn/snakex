@@ -6,6 +6,7 @@ public class GUIController : MonoBehaviour {
     public Canvas gameCanvas;
     public GameObject notificationPrefab;
     public Text score;
+    public GameObject gameOverPanel;
 
     public readonly string[] congratulationMessages = {
         "Nice!",
@@ -36,9 +37,7 @@ public class GUIController : MonoBehaviour {
     }
 
     public void ShowNotification(string text) {
-        if (lastNotification != null) {
-            Destroy(lastNotification);
-        }
+        RemoveNotifications();
 
         GameObject notificationObject = Instantiate(notificationPrefab);
         lastNotification = notificationObject;
@@ -49,7 +48,17 @@ public class GUIController : MonoBehaviour {
         notificationObject.GetComponent<NotificationFade>().SetupAnimation();
     }
 
+    public void RemoveNotifications() {
+        if (lastNotification != null) {
+            Destroy(lastNotification);
+        }
+    }
+
     public void SetScore(int s) {
         score.text = s.ToString();
+    }
+
+    public void SetGameOverPanelActive(bool active) {
+        gameOverPanel.SetActive(active);
     }
 }

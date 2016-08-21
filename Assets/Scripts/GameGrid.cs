@@ -21,11 +21,6 @@ public class GameGrid : MonoBehaviour {
         MOVED, ATE, DIED, ROTATING, ERROR
     }
 
-    void Awake() {
-        snake = new LinkedList<GridCube>();
-        cubes = new LinkedList<GridCube>();
-    }
-
     void Update() {
         if (isRotating) {
             float t = (Time.time - startTime) / rotationDuration;
@@ -49,20 +44,14 @@ public class GameGrid : MonoBehaviour {
         bool changedSide = false;
         GridCube next = snake.First.Value.GetNextCube(direction, out changedSide);
         if (next == null) {
-            Debug.LogWarning("Unable to move to next GridCube!");
-            return MoveResult.ERROR;
+            return MoveResult.DIED;
         }
 
         if (next.IsSnake()) {
             return MoveResult.DIED;
         }
 
-        //TODO: Handle rotationEnabled == false
         if (changedSide) {
-            if (!rotationEnabled) {
-                return MoveResult.DIED;
-            }
-
             bool ok = StartRotation(direction);
             return ok ? MoveResult.ROTATING : MoveResult.ERROR;
         }
@@ -126,6 +115,15 @@ public class GameGrid : MonoBehaviour {
     }
 
     public void SetupGrid(bool enableRotation, int appleCount) {
+        if (cubes != null) {
+            foreach (GridCube c in cubes) {
+                Destroy(c.gameObject);
+            }
+        }
+
+        snake = new LinkedList<GridCube>();
+        cubes = new LinkedList<GridCube>();
+        isRotating = false;
         rotationEnabled = enableRotation;
 
         if (gridSize % 2 == 0) {
