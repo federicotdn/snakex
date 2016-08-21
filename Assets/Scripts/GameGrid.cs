@@ -18,7 +18,7 @@ public class GameGrid : MonoBehaviour {
     private float lastVal = 0;
 
     public enum MoveResult {
-        MOVED, DIED, ROTATING, ERROR
+        MOVED, ATE, DIED, ROTATING, ERROR
     }
 
     void Awake() {
@@ -35,7 +35,7 @@ public class GameGrid : MonoBehaviour {
 
             transform.Rotate(rotationDirection * diff, Space.World);
 
-            if (newVal >= 90) {
+            if (t >= 1) {
                 isRotating = false;
             }
         }
@@ -76,11 +76,11 @@ public class GameGrid : MonoBehaviour {
         if (!ateApple) {
             last.SetCubeState(GridCube.CubeState.EMPTY);
             snake.RemoveLast();
+            return MoveResult.MOVED;
         } else {
             PlaceNewApple();
+            return MoveResult.ATE;
         }
-
-        return MoveResult.MOVED;
     }
 
     private bool StartRotation(GridCube.Direction direction) {

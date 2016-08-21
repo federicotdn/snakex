@@ -4,30 +4,35 @@ using System.Collections;
 public class GameController : MonoBehaviour {
 
     public GameGrid gameGrid;
+    public GUIController guiController;
     public float inputCooldown = 1;
     public int appleCount = 5;
     public bool enableRotation = true;
 
     private GridCube.Direction lastDirection = GridCube.Direction.RIGHT;
     private float lastInputTime = 0;
+    private int score = 0;
 
     void Start() {
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+
         gameGrid.SetupGrid(enableRotation, appleCount);
         SetupCamera();
 	}
 	
 	void Update() {
+        GridCube.Direction dir = ReadInput();
+
+        if (dir == GridCube.Direction.NONE || AreOpposite(dir, lastDirection)) {
+            dir = lastDirection;
+        }
+
+        lastDirection = dir;
+
         lastInputTime += Time.deltaTime;
         if (lastInputTime > inputCooldown) {
             lastInputTime = 0;
-
-            GridCube.Direction dir = ReadInput();
-
-            if (dir == GridCube.Direction.NONE || AreOpposite(dir, lastDirection)) {
-                dir = lastDirection;
-            }
-
-            lastDirection = dir;
 
             Debug.Log("Read direction:");
             Debug.Log(dir);
@@ -41,6 +46,11 @@ public class GameController : MonoBehaviour {
                 case GameGrid.MoveResult.ERROR:
                     Debug.Log("An error occured.");
                     gameObject.SetActive(false);
+                    break;
+                case GameGrid.MoveResult.ATE:
+                    guiController.ShowNotification(guiController.RandomCongratulationMessage());
+                    score++;
+                    guiController.SetScore(score);
                     break;
                 case GameGrid.MoveResult.ROTATING:
                 default:
