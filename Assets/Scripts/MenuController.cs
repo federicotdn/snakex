@@ -15,7 +15,7 @@ public class MenuController : MonoBehaviour {
 
     public void Start3DGame() {
         PlayerPrefs.SetInt("3dMode", 1);
-        PlayerPrefs.SetInt("AppleCount", 20);
+        PlayerPrefs.SetInt("AppleCount", 10);
         SceneManager.LoadScene("Main");
     }
 

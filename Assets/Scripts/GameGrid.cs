@@ -42,12 +42,12 @@ public class GameGrid : MonoBehaviour {
         }
 
         bool changedSide = false;
-        GridCube next = snake.First.Value.GetNextCube(direction, out changedSide);
+        GridCube next = SnakeHead().GetNextCube(direction, out changedSide);
         if (next == null) {
             return MoveResult.DIED;
         }
 
-        if (next.IsSnake()) {
+        if (next.IsSnake() || next.IsHole()) {
             return MoveResult.DIED;
         }
 
@@ -58,7 +58,7 @@ public class GameGrid : MonoBehaviour {
 
         bool ateApple = next.IsApple();
 
-        next.SetCubeState(GridCube.CubeState.HEAD);
+        next.SetCubeState(GridCube.CubeState.SNAKE);
         snake.AddFirst(next);
 
         GridCube last = snake.Last.Value;
@@ -67,7 +67,6 @@ public class GameGrid : MonoBehaviour {
             snake.RemoveLast();
             return MoveResult.MOVED;
         } else {
-            PlaceNewApple();
             return MoveResult.ATE;
         }
     }
@@ -103,13 +102,28 @@ public class GameGrid : MonoBehaviour {
         return gridCubeClone.transform.transform.localScale.x * gridSize;
     }
 
-    private void PlaceNewApple() {
+    public void PlaceNewHole() {
+        // TODO: Avoid placing holes on edges
+        PlaceNewObject(GridCube.CubeState.HOLE);
+    }
+
+    public void PlaceNewApple() {
+        PlaceNewObject(GridCube.CubeState.APPLE);
+    }
+
+    private GridCube SnakeHead() {
+        return snake.First.Value;
+    }
+
+    private void PlaceNewObject(GridCube.CubeState state) {
         bool done = false;
         while (!done) {
             GridCube cube = cubes.ElementAt(Random.Range(0, cubes.Count));
-            if (cube.IsSnake() || cube.IsApple()) { continue; }
+            if (!cube.isEmpty() || (cube.SameSideAs(SnakeHead()) && rotationEnabled)) {
+                continue;
+            }
 
-            cube.SetCubeState(GridCube.CubeState.APPLE);
+            cube.SetCubeState(state);
             done = true;
         }
     }
@@ -158,10 +172,28 @@ public class GameGrid : MonoBehaviour {
 
                     if (i == centerPos && j == centerPos && k == 0) {
                         // Set up starting cell 
-                        cube.SetCubeState(GridCube.CubeState.HEAD);
+                        cube.SetCubeState(GridCube.CubeState.SNAKE);
                         snake.AddFirst(cube);
                     } else {
                         cube.SetCubeState(GridCube.CubeState.EMPTY);
+                    }
+
+                    if (i == 0) {
+                        cube.AddCubeSide(GridCube.CubeSide.LEFT);
+                    } else if (i == gridSize - 1) {
+                        cube.AddCubeSide(GridCube.CubeSide.RIGHT);
+                    }
+
+                    if (j == 0) {
+                        cube.AddCubeSide(GridCube.CubeSide.BOTTOM);
+                    } else if (j == gridSize - 1) {
+                        cube.AddCubeSide(GridCube.CubeSide.TOP);
+                    }
+
+                    if (k == 0) {
+                        cube.AddCubeSide(GridCube.CubeSide.FRONT);
+                    } else if (k == gridSize - 1) {
+                        cube.AddCubeSide(GridCube.CubeSide.BACK);
                     }
 
                     cubes.Add(cube);

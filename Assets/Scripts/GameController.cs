@@ -3,28 +3,36 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour {
+    private const float DEFAULT_INPUT_COOLDOWN = 0.2f;
+    private const float COOLDOWN_STEP = 0.001f;
+    private const float MIN_INPUT_COOLDOWN = 0.05f;
+    private const float NEW_HOLE_PROBABILITY = 0.1f;
 
     public GameGrid gameGrid;
     public GUIController guiController;
-    public float inputCooldown = 1;
 
     private GridCube.Direction lastDirection = GridCube.Direction.RIGHT;
+    private GridCube.Direction lastMovedDirection = GridCube.Direction.NONE;
     private GameGrid.MoveResult lastResult;
     private float lastInputTime = 0;
     private int score = 0;
     private bool playing = true;
+    private bool rotationEnabled;
+    private float inputCoolDown = DEFAULT_INPUT_COOLDOWN;
 
     void Start() {
         Initialize();
     }
 
     private void Initialize() {
-        bool enableRotation = (PlayerPrefs.GetInt("3dMode", 1) == 1);
+        rotationEnabled = (PlayerPrefs.GetInt("3dMode", 1) == 1);
         int appleCount = PlayerPrefs.GetInt("AppleCount", 20);
 
         lastResult = GameGrid.MoveResult.NONE;
+        inputCoolDown = DEFAULT_INPUT_COOLDOWN;
+        guiController.SetTopScore(PlayerPrefs.GetInt("TopScore", 0));
 
-        gameGrid.SetupGrid(enableRotation, appleCount);
+        gameGrid.SetupGrid(rotationEnabled, appleCount);
         SetupCamera();
     }
 
@@ -35,20 +43,36 @@ public class GameController : MonoBehaviour {
 
         GridCube.Direction dir = ReadInput();
 
-        if (dir == GridCube.Direction.NONE || AreOpposite(dir, lastDirection) || lastResult == GameGrid.MoveResult.ROTATING) {
+        if (dir == GridCube.Direction.NONE || AreOpposite(dir, lastMovedDirection)) {
             dir = lastDirection;
         }
 
+        if (lastResult == GameGrid.MoveResult.ROTATING) {
+            dir = lastMovedDirection;
+        }
+
+        lastDirection = dir;
+
         lastInputTime += Time.deltaTime;
-        if (lastInputTime > inputCooldown) {
-            lastDirection = dir;
+        if (lastInputTime > inputCoolDown) {
+            
             lastInputTime = 0;
 
             GameGrid.MoveResult result = gameGrid.MoveHead(dir);
 
+            if (result == GameGrid.MoveResult.MOVED || result == GameGrid.MoveResult.ATE) {
+                lastMovedDirection = dir;
+            }
+
             switch (result) {
                 case GameGrid.MoveResult.DIED:
                     playing = false;
+
+                    int topScore = PlayerPrefs.GetInt("TopScore", 0);
+                    if (score > topScore) {
+                        PlayerPrefs.SetInt("TopScore", score);
+                    }
+
                     guiController.RemoveNotifications();
                     guiController.SetGameOverPanelActive(true);
                     break;
@@ -57,9 +81,21 @@ public class GameController : MonoBehaviour {
                     gameObject.SetActive(false);
                     break;
                 case GameGrid.MoveResult.ATE:
-                    guiController.ShowNotification(guiController.RandomCongratulationMessage());
-                    score++;
+                    gameGrid.PlaceNewApple();
+                    if (rotationEnabled && Random.value < NEW_HOLE_PROBABILITY) {
+                        gameGrid.PlaceNewHole();
+                    }
+
+                    //TODO: Win if no more space is available
+
+                    score++;                    
                     guiController.SetScore(score);
+
+                    inputCoolDown -= COOLDOWN_STEP;
+                    if (inputCoolDown < MIN_INPUT_COOLDOWN) {
+                        inputCoolDown = MIN_INPUT_COOLDOWN;
+                    }
+
                     break;
                 case GameGrid.MoveResult.ROTATING:
                 default:

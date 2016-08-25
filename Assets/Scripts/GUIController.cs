@@ -6,6 +6,7 @@ public class GUIController : MonoBehaviour {
     public Canvas gameCanvas;
     public GameObject notificationPrefab;
     public Text score;
+    public Text topScore;
     public GameObject gameOverPanel;
 
     public readonly string[] congratulationMessages = {
@@ -60,6 +61,10 @@ public class GUIController : MonoBehaviour {
 
     public void SetScore(int s) {
         score.text = s.ToString();
+    }
+
+    public void SetTopScore(int s) {
+        topScore.text = s.ToString();
     }
 
     public void SetGameOverPanelActive(bool active) {

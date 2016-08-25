@@ -1,16 +1,36 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 public class GridCube : MonoBehaviour {
 
     private CubeState currentState = CubeState.EMPTY;
+    public CubeSide cubeSide = 0;
+
+    [Flags]
+    public enum CubeSide {
+        FRONT = 1,
+        BACK = 2,
+        TOP = 4,
+        BOTTOM = 8,
+        LEFT = 16,
+        RIGHT = 32
+    }
 
     public enum Direction {
         UP, DOWN, LEFT, RIGHT, NONE
     }
 
     public enum CubeState {
-        BODY, HEAD, APPLE, EMPTY
+        SNAKE, APPLE, EMPTY, HOLE
+    }
+
+    public void AddCubeSide(CubeSide s) {
+        cubeSide |= s;
+    }
+
+    public bool SameSideAs(GridCube other) {
+        return (other.cubeSide & cubeSide) != 0;
     }
 
     public void SetCubeState(CubeState state) {
@@ -18,14 +38,14 @@ public class GridCube : MonoBehaviour {
         currentState = state;
 
         switch (state) {
-            case CubeState.BODY:
-                ren.material.color = Color.blue;
-                break;
-            case CubeState.HEAD:
+            case CubeState.SNAKE:
                 ren.material.color = Color.blue;
                 break;
             case CubeState.APPLE:
                 ren.material.color = Color.red;
+                break;
+            case CubeState.HOLE:
+                ren.material.color = Color.black;
                 break;
             case CubeState.EMPTY:
             default:
@@ -38,8 +58,16 @@ public class GridCube : MonoBehaviour {
         return currentState == CubeState.APPLE;
     }
 
+    public bool IsHole() {
+        return currentState == CubeState.HOLE;
+    }
+
     public bool IsSnake() {
-        return currentState == CubeState.BODY || currentState == CubeState.HEAD;
+        return currentState == CubeState.SNAKE;
+    }
+
+    public bool isEmpty() {
+        return currentState == CubeState.EMPTY;
     }
 
     public GridCube GetNextCube(Direction dir, out bool changedSide) {
