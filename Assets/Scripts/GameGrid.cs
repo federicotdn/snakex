@@ -9,7 +9,7 @@ public class GameGrid : MonoBehaviour {
     public float rotationDuration = 5.0f;
 
     private LinkedList<GridCube> snake;
-    private LinkedList<GridCube> cubes;
+    private List<GridCube> cubes;
     private bool rotationEnabled = false;
 
     private bool isRotating = false;
@@ -18,7 +18,7 @@ public class GameGrid : MonoBehaviour {
     private float lastVal = 0;
 
     public enum MoveResult {
-        MOVED, ATE, DIED, ROTATING, ERROR
+        MOVED, ATE, DIED, ROTATING, ERROR, NONE
     }
 
     void Update() {
@@ -122,7 +122,7 @@ public class GameGrid : MonoBehaviour {
         }
 
         snake = new LinkedList<GridCube>();
-        cubes = new LinkedList<GridCube>();
+        cubes = new List<GridCube>();
         isRotating = false;
         rotationEnabled = enableRotation;
 
@@ -164,7 +164,7 @@ public class GameGrid : MonoBehaviour {
                         cube.SetCubeState(GridCube.CubeState.EMPTY);
                     }
 
-                    cubes.AddLast(cube);
+                    cubes.Add(cube);
                 }
             }
         }

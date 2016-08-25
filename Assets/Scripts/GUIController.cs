@@ -22,12 +22,16 @@ public class GUIController : MonoBehaviour {
         "Incredible!",
         "Amazing!",
         "OMG!",
-        "en.Messages.Congratulate!",
+        "en.messages.Congratulate!",
         "Good!",
         "Pretty good!",
         "Not bad!",
         "Life has no intrinsic meaning!",
-        "NullReferenceException"
+        "NullReferenceException",
+        "Terrific!",
+        "Alright!",
+        "Whaaaat",
+        "Yeaaah!"
     };
 
     private GameObject lastNotification = null;

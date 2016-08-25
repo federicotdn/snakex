@@ -9,40 +9,43 @@ public class GameController : MonoBehaviour {
     public float inputCooldown = 1;
 
     private GridCube.Direction lastDirection = GridCube.Direction.RIGHT;
+    private GameGrid.MoveResult lastResult;
     private float lastInputTime = 0;
     private int score = 0;
     private bool playing = true;
 
     void Start() {
         Initialize();
-	}
+    }
 
     private void Initialize() {
         bool enableRotation = (PlayerPrefs.GetInt("3dMode", 1) == 1);
         int appleCount = PlayerPrefs.GetInt("AppleCount", 20);
 
+        lastResult = GameGrid.MoveResult.NONE;
+
         gameGrid.SetupGrid(enableRotation, appleCount);
         SetupCamera();
     }
-	
-	void Update() {
+
+    void Update() {
         if (!playing) {
             return;
         }
 
         GridCube.Direction dir = ReadInput();
 
-        if (dir == GridCube.Direction.NONE || AreOpposite(dir, lastDirection)) {
+        if (dir == GridCube.Direction.NONE || AreOpposite(dir, lastDirection) || lastResult == GameGrid.MoveResult.ROTATING) {
             dir = lastDirection;
         }
 
-        lastDirection = dir;
-
         lastInputTime += Time.deltaTime;
         if (lastInputTime > inputCooldown) {
+            lastDirection = dir;
             lastInputTime = 0;
 
             GameGrid.MoveResult result = gameGrid.MoveHead(dir);
+
             switch (result) {
                 case GameGrid.MoveResult.DIED:
                     playing = false;
@@ -63,6 +66,8 @@ public class GameController : MonoBehaviour {
                     // pass
                     break;
             }
+
+            lastResult = result;
         }
 	}
 
